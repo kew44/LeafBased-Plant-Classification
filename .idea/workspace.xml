@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="877a42ef-8eb1-4206-9361-e33ce64e7e3c" name="Default Changelist" comment="">
+      <change afterPath="$PROJECT_DIR$/ImageProcessing.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
     </list>
@@ -9,6 +10,13 @@
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Python Script" />
+      </list>
+    </option>
   </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -79,6 +87,7 @@
       <option name="presentableId" value="Default" />
       <updated>1623677075967</updated>
       <workItem from="1623677077608" duration="4332000" />
+      <workItem from="1624561204291" duration="7534000" />
     </task>
     <servers />
   </component>
@@ -86,9 +95,21 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="414" y="174" key="#com.intellij.execution.impl.EditConfigurationsDialog" timestamp="1624603048180">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="414" y="174" key="#com.intellij.execution.impl.EditConfigurationsDialog/0.0.1920.1040/-1280.12.1280.984@0.0.1920.1040" timestamp="1624603048180" />
     <state x="92" y="92" width="1736" height="856" key="DiffContextDialog" timestamp="1623681624688">
       <screen x="0" y="0" width="1920" height="1040" />
     </state>
     <state x="92" y="92" width="1736" height="856" key="DiffContextDialog/0.0.1920.1040/-1280.12.1280.984@0.0.1920.1040" timestamp="1623681624688" />
+    <state x="740" y="274" key="FileChooserDialogImpl" timestamp="1624604181785">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="740" y="274" key="FileChooserDialogImpl/0.0.1920.1040/-1280.12.1280.984@0.0.1920.1040" timestamp="1624604181785" />
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup" timestamp="1624602715579">
+      <screen x="0" y="0" width="1920" height="1040" />
+    </state>
+    <state x="623" y="225" width="672" height="678" key="search.everywhere.popup/0.0.1920.1040/-1280.12.1280.984@0.0.1920.1040" timestamp="1624602715579" />
   </component>
 </project>
