@@ -5,6 +5,25 @@ import numpy
 def openImage(imageName):
 	"""
 		Read an image from the specified path
+
+		For a colour image, the returned image is a 3D array/list - a list of lists of lists.
+		The outmost list is represents the list of rows of the image.
+		Each element in this outmost list is a list which represents a  row in the image
+		This inner list is itself a list of lists - each element in this inner list is a list of size 3
+		representing a pixel in the image where the list representing the pixel specifies the RGB values of that
+		pixel as [B, G, R]
+
+		For a greysccale image, the returned image is a 2D list where each element at row i and column j represents
+		a pixel, with the value being the grey-level intensity of that pixel
+
+		Thus the length of the image variable gives the number of rows in the image (height)
+		The length of an inner list gives the number of columns in the image (width)
+		The length of an inner inner list is 3 -> the 3 RGB values
+
+		Since colour images increase the complexity of the model, we shall be converting the image to greyscale
+		when reading it in
+
+
 		:param imageName: The name of the image, include its directory path and file extension
 		:return: The image in the form of an intensity values matrix
 	"""
@@ -19,7 +38,8 @@ def openImage(imageName):
 		If the image can't be read then an empty matrix is returned
 			
 	"""
-	image = cv2.imread(imageName, cv2.IMREAD_COLOR)
+	#image = cv2.imread(imageName, cv2.IMREAD_COLOR) #  Read in image as is
+	image = cv2.imread(imageName, cv2.IMREAD_GRAYSCALE)  # Read in image and convert to greyscale
 	print("Image '" + imageName + "' has been opened")
 	return image
 
@@ -45,6 +65,14 @@ def displayImage(imageName, image):
 	"""
 	cv2.waitKey(0)
 
+
+
+def getImageFeatures(image):
+	"""
+
+		:param image:
+		:return:
+	"""
 
 """==============================================================================================================="""
 #Write image to file

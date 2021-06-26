@@ -16,6 +16,7 @@
 		1.
 """
 import pandas
+import cv2
 import ImageProcessing # My file
 
 from IPython.display import display
@@ -67,8 +68,16 @@ def main():
 	for image in range(1):
 		imagePath = getPropertyValue(labImagesListingDF, image, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
-		image = ImageProcessing.openImage(imageFullPath)
-		print(image)
+		#image = ImageProcessing.openImage(imageFullPath)
+		#print(image)
+
+		image = cv2.imread(imageFullPath, cv2.IMREAD_COLOR)
+		image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)
+		ImageProcessing.displayImage("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", image)
+		#print(len(image))
+		#print(len(image[0]))
+		#print(len(image[0][0]))
 		#ImageProcessing.displayImage(imageFullPath, image)
 
 
