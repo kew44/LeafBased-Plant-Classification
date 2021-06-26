@@ -65,16 +65,52 @@ def main():
 	# string1 = labImagesListingDF[1:2].get('source')
 	print(labImagesListingDF[1:3].values)
 
-	for image in range(1):
+	for image in range(1, 2):
 		imagePath = getPropertyValue(labImagesListingDF, image, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
-		#image = ImageProcessing.openImage(imageFullPath)
-		#print(image)
 
-		image = cv2.imread(imageFullPath, cv2.IMREAD_COLOR)
-		image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-		imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)
-		ImageProcessing.displayImage("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", image)
+		image = ImageProcessing.openImage(imageFullPath)
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1-828.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/abies_nordmanniana/ny1057-01-1.jpg")
+
+		print(image)
+		#ImageProcessing.displayImage(imageFullPath, image)
+
+
+		imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
+		imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
+
+		# Crop image to remove rulers and colour markings on the right and bottom
+		image = image[0:imageHeight-100, 0: imageWidth-100]
+		ImageProcessing.displayImage(imageFullPath, image)
+
+		image = ImageProcessing.enhanceImage(image)
+
+		ImageProcessing.displayImage(imageFullPath, image)
+
+		imageHistogram = cv2.calcHist(image, [0], None, [256], [0,256])
+
+		from matplotlib import pyplot as plt
+		plt.plot(imageHistogram, color='g')
+		plt.xlim([0, 256])
+		plt.show()
+
+
+		thresholdValue, image = ImageProcessing.segmentImage(image)
+
+		print("Thresholded Image:")
+		print(image)
+		ImageProcessing.displayImage(imageFullPath, image)
+
+		image = ImageProcessing.morphImage(image)
+		ImageProcessing.displayImage(imageFullPath, image)
+
+		#image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		#imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)
+
+
+
 		#print(len(image))
 		#print(len(image[0]))
 		#print(len(image[0][0]))
@@ -104,6 +140,8 @@ def main():
 		
 	"""
 	featureMatrixDF = pandas.DataFrame(columns=features)
+
+	ImageProcessing.getImageFeatures(image)
 
 
 

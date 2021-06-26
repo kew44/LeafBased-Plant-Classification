@@ -66,13 +66,62 @@ def displayImage(imageName, image):
 	cv2.waitKey(0)
 
 
+def enhanceImage(image):
+
+	enhancedImage = cv2.GaussianBlur(image, (5, 5), 0) # Filtering
+
+	return enhancedImage
+
+
+
+def segmentImage(image):
+	"""
+
+		:param image: A grayscale image
+		:return:
+	"""
+	# Do Thresholding
+
+	thresholdValue = 128
+	maxIntensity = 255
+	T, segmentedImage = cv2.threshold(image, thresholdValue, maxIntensity, cv2.THRESH_BINARY + cv2.THRESH_OTSU) # Global thresholding
+
+	#if Otsu's method didn't work properly (too many black pixels) then use the set threshold value
+	countBlackPixels = numpy.sum(segmentedImage==0)
+
+	if countBlackPixels > (image.shape[0]*image.shape[1] / 5):
+		segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 2) # block size of 5
+		T = -1 # since adaptative thresholding was used, there's no single threshold value
+
+
+	print("Threshold value: ", T)
+
+	return T, segmentedImage
+
+
+def morphImage(image):
+	"""
+		Do Morphological Image Processing
+		:param image:
+		:return:
+	"""
+	se = cv2.getStructuringElement(cv2.MORPH_CROSS, (3, 3))  # 3x3 Structuring Element of a cross type
+
+	morphedImage = cv2.morphologyEx(image, cv2.MORPH_CLOSE, se)  # Closing (to fill in gaps/ridges on image edges)
+
+	return morphedImage
+
 
 def getImageFeatures(image):
 	"""
 
-		:param image:
-		:return:
+		:param image: the image (as a 2D array of grey-level intensities)
+		:return: The feature vector (as a list) of this image
 	"""
+	moments = cv2.moments(image, binaryImage=False)
+	huMoments = cv2.HuMoments(moments) # Get the 7 Hu Invariant moments as a list
+	print(huMoments)
+
 
 """==============================================================================================================="""
 #Write image to file
