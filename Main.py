@@ -62,12 +62,13 @@ def main():
 	print("\tNumber of field images:\t", fieldImagesCount)
 
 	# string1 = labImagesListingDF[1:2].get('source')
-	# print(labImagesListingDF[1:3].values)
+	print(labImagesListingDF[1:3].values)
 
-	for image in range(5):
+	for image in range(1):
 		imagePath = getPropertyValue(labImagesListingDF, image, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
 		image = ImageProcessing.openImage(imageFullPath)
+		print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
 
 
@@ -75,8 +76,29 @@ def main():
 	"""2. Image Preprocessing"""
 
 
+	"""3. Obtain Features"""
 
-	"""3. Training"""
+	"""
+		The Features being used are:
+			Hu's 7 invariant moments
+			Haralick's 14 Texture Descriptors
+	"""
+	features =  [
+					"Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7", "TD1", "TD2", "TD3", "TD4", "TD5", "TD6", "TD7",
+					"TD8", "TD9", "TD10", "TD11", "TD12", "TD13", "TD14"
+				]
+
+	"""
+		featureMatrixDF is a list of the feature vectors for all the images as a DataFrame structure
+		Each row number corresponds to the row number in the imagesListingDF that is being used, i.e. row i in
+		featureMatrixDF is the feature vector of the image at row i in imagesListingDF 
+		
+	"""
+	featureMatrixDF = pandas.DataFrame(columns=features)
+
+
+
+	"""4. Training"""
 
 
 
