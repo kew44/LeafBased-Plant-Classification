@@ -19,6 +19,10 @@ import pandas
 import cv2
 from matplotlib import pyplot
 from sklearn.model_selection import train_test_split
+from collections import Counter
+from sklearn.neural_network import MLPClassifier
+from sklearn import metrics
+
 import ImageProcessing # My file
 
 from IPython.display import display
@@ -154,7 +158,7 @@ def main():
 		# ImageProcessing.displayImage(imageFullPath, image)
 
 
-	"""4. Training"""
+	"""4. Classification - Training and Testing"""
 
 	# The label (Classification) of an image (being represented by its feature vector) is the species of that image
 	labelsDF = imagesListingDF["species"]
@@ -163,7 +167,9 @@ def main():
 		Splitting the labelled dataset into a Training Set (67%) and a Test Set (33%) and doing the training and testing
 		Setting train_size to 0.67 and test_size will be automatically set to 0.33 (1.0-0.67)
 		
-		The data is shuffled before splitting (by default)
+		The data is shuffled before splitting (by default). However, we are specifying the random_state value (this 
+		fixes the seed of the pseudorandom number generator)
+		so that the dataset is shuffled the same way on each run, allowing us to accurately compare different ML algorithms 
 
 		featuresTest is what we are going to use to predict the species to test our model
 		labelsTest matrix is the 'ground truth' labels (i.e. correct species)
@@ -179,7 +185,83 @@ def main():
 			If an integer value is specified, a same/similar shuffle will be done each time resulting in the same train and test datasets
 	"""
 
-	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(featureMatrixDF, labelsDF, train_size=0.67, stratify=labelsDF)
+	print()
+	print("The species along with their number of occurrences in the dataset we're using:")
+
+	speciesDict = Counter(labelsDF)
+	for key in speciesDict:
+		# format the printing so that the numbers are directly beneath each other (species have variable name length)
+		print("\t", '{species: <30}'.format(species=key), speciesDict[key])
+
+	print()
+
+	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(featureMatrixDF, labelsDF, train_size=0.67, stratify=labelsDF, random_state=1)
+
+	# Verify that Stratified splitting was done
+	print("Verifying Stratification: (Compare with above listing)")
+	speciesTrainingDict = Counter(labelsTrain)
+	speciesList = []
+
+	for key in speciesTrainingDict:
+		speciesList.append(key)
+		# format the printing so that the numbers are directly beneath each other (species have variable name length)
+		print("\t", '{species: <30}'.format(species=key), speciesTrainingDict[key])
+
+
+	print()
+
+	"""Classifiers"""
+	#Multi-Layer Perceptron
+	#‘adam’ refers to a stochastic gradient-based optimizer proposed by Kingma, Diederik, and Jimmy Ba
+	# Our dataset is sufficiently large, so we're sticking with the default 'adam' solver
+	mlpClassifier = MLPClassifier(random_state=1, max_iter=1000)
+
+	from sklearn.linear_model import LogisticRegression
+	lrClassifier = LogisticRegression(max_iter=1000)
+
+	from sklearn.svm import SVC
+	svcClassifier = SVC()
+
+	from sklearn.svm import LinearSVC
+	lsvcClassifier = LinearSVC()
+
+	from sklearn.naive_bayes import MultinomialNB
+	mnbClassifier = MultinomialNB()
+
+	from sklearn.linear_model import Perceptron
+	pClassifer = Perceptron()
+
+	from sklearn.linear_model import PassiveAggressiveClassifier
+	paClassifer = PassiveAggressiveClassifier()
+
+
+	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, mnbClassifier, pClassifer, paClassifer]:
+		classifier.fit(featuresTrain, labelsTrain)
+		labelPredictions = classifier.predict(featuresTest)
+
+		print("Classifier:", classifier.__class__.__name__)
+
+		"""
+			normalize = True -> returns fraction (in decimal) of correctly classified samples (best performance = 1)
+			normalise = False -> returns count  of correctly classified samples
+			default is  normalise = True
+		"""
+		print("Accuracy: ", metrics.accuracy_score(labelsTest, labelPredictions))
+
+		# 'labels parameter by default uses the labels passed in by the ground truth (labelsTest)'
+		# average='micro' since we are doing Single-Label Classification - the other options macro/weighted/samples are for Multi-Label Classification
+		# Return 0 if there is any division by 0 about to take place
+
+		print("Precision: ", metrics.precision_score(labelsTest, labelPredictions, average='micro', zero_division=0))
+		print("Recall: ", metrics.recall_score(labelsTest, labelPredictions, average='micro', zero_division=0))
+		print("F1 Score: ", metrics.f1_score(labelsTest, labelPredictions, average='micro', zero_division=0))
+		print("Jaccard Score: ", metrics.jaccard_score(labelsTest, labelPredictions, average='micro'))
+		print("Hamming Loss: ", metrics.hamming_loss(labelsTest, labelPredictions))
+		print()
+		print("Confusion Matrix: ", metrics.confusion_matrix(labelsTest, labelPredictions))
+		print()
+		print("Classification Report showing the main Classification metrics for each label (species):\n", metrics.classification_report(labelsTest, labelPredictions, target_names=speciesList, zero_division=0))
+		print("-----------------------------------")
 
 
 
@@ -243,5 +325,6 @@ def getPropertyValue(imagesListingDF, row: int, property: int):
 		return imagesListingDF.iloc[row, FILE_ID] # Default to return if invalid property given
 
 
-
-main()
+# Run the main method if this python file is being executed/run directly (either from IDE or Command Line)
+if __name__ == '__main__':
+	main()
