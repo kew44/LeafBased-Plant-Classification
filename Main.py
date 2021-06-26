@@ -17,6 +17,7 @@
 """
 import pandas
 import cv2
+from matplotlib import pyplot
 import ImageProcessing # My file
 
 from IPython.display import display
@@ -63,16 +64,16 @@ def main():
 	print("\tNumber of field images:\t", fieldImagesCount)
 
 	# string1 = labImagesListingDF[1:2].get('source')
-	print(labImagesListingDF[1:3].values)
+	#print(labImagesListingDF[1:3].values)
 
-	for image in range(1, 2):
-		imagePath = getPropertyValue(labImagesListingDF, image, IMAGE_PATH)
+	for imageNum in range(1, 2):
+		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
 
-		image = ImageProcessing.openImage(imageFullPath)
+		#image = ImageProcessing.openImage(imageFullPath)
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1-828.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
-		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/abies_nordmanniana/ny1057-01-1.jpg")
+		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
 
 		print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
@@ -81,8 +82,12 @@ def main():
 		imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
 		imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
 
-		# Crop image to remove rulers and colour markings on the right and bottom
-		image = image[0:imageHeight-100, 0: imageWidth-100]
+		imageSource = getPropertyValue(imagesListingDF, imageNum, SOURCE)
+
+		if imageSource == "lab":
+			# Crop image to size and colour patch rulers on the right and bottom
+			image = image[0:imageHeight-120, 0: imageWidth-190]
+
 		ImageProcessing.displayImage(imageFullPath, image)
 
 		image = ImageProcessing.enhanceImage(image)
@@ -91,10 +96,10 @@ def main():
 
 		imageHistogram = cv2.calcHist(image, [0], None, [256], [0,256])
 
-		from matplotlib import pyplot as plt
-		plt.plot(imageHistogram, color='g')
-		plt.xlim([0, 256])
-		plt.show()
+
+		pyplot.plot(imageHistogram, color='g')
+		pyplot.xlim([0, 256])
+		pyplot.show()
 
 
 		thresholdValue, image = ImageProcessing.segmentImage(image)

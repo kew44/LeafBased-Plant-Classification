@@ -2,6 +2,11 @@ import cv2
 import numpy
 
 
+#CONSTANTS
+MEDIAN = 0
+GAUSSIAN = 1
+
+
 def openImage(imageName):
 	"""
 		Read an image from the specified path
@@ -66,9 +71,17 @@ def displayImage(imageName, image):
 	cv2.waitKey(0)
 
 
-def enhanceImage(image):
 
-	enhancedImage = cv2.GaussianBlur(image, (5, 5), 0) # Filtering
+def enhanceImage(image, filterMethod=GAUSSIAN):
+
+	#Doing Smoothing
+
+	if filterMethod == MEDIAN:
+		enhancedImage = cv2.medianBlur(image, 5, 0)
+	elif filterMethod == GAUSSIAN:
+		enhancedImage = cv2.GaussianBlur(image, (5, 5), 0)
+	else: # Default for invalid filterMethod given - Do Gaussian
+		enhancedImage = cv2.GaussianBlur(image, (5, 5), 0)
 
 	return enhancedImage
 
@@ -89,8 +102,8 @@ def segmentImage(image):
 	#if Otsu's method didn't work properly (too many black pixels) then use the set threshold value
 	countBlackPixels = numpy.sum(segmentedImage==0)
 
-	if countBlackPixels > (image.shape[0]*image.shape[1] / 5):
-		segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 3, 2) # block size of 5
+	if countBlackPixels > (image.shape[0]*image.shape[1] / 3):
+		segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2) # block size of 5
 		T = -1 # since adaptative thresholding was used, there's no single threshold value
 
 
