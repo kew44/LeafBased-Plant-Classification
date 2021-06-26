@@ -1,4 +1,6 @@
 import cv2
+import numpy
+
 
 def openImage(imageName):
 	"""
@@ -14,7 +16,7 @@ def openImage(imageName):
 				- cv2.IMREAD_GRAYSCALE 
 				- cv2.IMREAD_UNCHANGED  
 
-		If the image can't be read then an empty matrix is returned (or is an error given?)
+		If the image can't be read then an empty matrix is returned
 			
 	"""
 	image = cv2.imread(imageName, cv2.IMREAD_COLOR)

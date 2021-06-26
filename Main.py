@@ -15,13 +15,20 @@
 	Acknowledgements:
 		1.
 """
-import  pandas
+import pandas
 import ImageProcessing # My file
 
 from IPython.display import display
 
 
-# The column names of the Images Listing file
+# The column names of the Images Listing file with their indexes (in the DataFrame) as CONSTANTS
+FILE_ID = 0
+IMAGE_PATH = 1
+SEGMENTED_PATH = 2
+SPECIES = 3
+SOURCE = 4
+
+# The column names in a array
 COLUMNS = ["file_id", "image_path", "segmented_path", "species", "source"]
 
 
@@ -58,7 +65,7 @@ def main():
 	# print(labImagesListingDF[1:3].values)
 
 	for image in range(5):
-		imagePath = getImagePath(labImagesListingDF, image)
+		imagePath = getPropertyValue(labImagesListingDF, image, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
 		image = ImageProcessing.openImage(imageFullPath)
 		#ImageProcessing.displayImage(imageFullPath, image)
@@ -82,6 +89,7 @@ def printImagesListing(imagesListingDF):
 
 		Need to write my own function to display since the size of the  values in the dataframe (specificially the
 		file paths are long and get truncated when using fucntions to display using the dataframe itself)
+
 		:param imagesListingDF:     A DataFrame representing a subset of the Leafsnap dataset's images listing file.
 									The columns of the DataFrame are 'file_id', 'image_path', 'segmented_path', 'species', 'source'
 		:return:                    None
@@ -107,16 +115,22 @@ def getImageListing(imagesListingDF, row: int):
 	for column in range(len(COLUMNS)):
 		print(imagesListingDF.iloc[row, column])
 
-	return  image
+	return image
 
 
-def getImagePath(imagesListingDF, row: int):
+def getPropertyValue(imagesListingDF, row: int, property: int):
 	"""
 		:param imagesListingDF:  A DataFrame representing a subset of the Leafsnap dataset's images listing file.
 		:param row:   The row number in the DataFrame indicating the image
-		:return: The image_path of the image at the row number
+		:param property: The property (column) which we want to get the value of for this image at the specified row.
+				property is one of FILE_ID = 0, IMAGE_PATH = 1, SEGMENTED_PATH = 2, SPECIES = 3, SOURCE = 4
+		:return: The value of the property of the image specified at the row number
 	"""
-	return imagesListingDF.iloc[row, 1] # COLUMNS[1] = "image_path"
+	if property in [FILE_ID, IMAGE_PATH, SEGMENTED_PATH, SPECIES, SOURCE]:
+		return imagesListingDF.iloc[row, property]
+	else:
+		return imagesListingDF.iloc[row, FILE_ID] # Default to return if invalid property given
+
 
 
 main()
