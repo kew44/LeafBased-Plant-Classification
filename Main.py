@@ -18,6 +18,7 @@
 import pandas
 import cv2
 from matplotlib import pyplot
+from sklearn.model_selection import train_test_split
 import ImageProcessing # My file
 
 from IPython.display import display
@@ -47,12 +48,13 @@ def main():
 	leafsnapDirectory = "data/leafsnap-dataset/"
 	imagesListingFile = leafsnapDirectory + "leafsnap-dataset-images.csv"
 
-	imagesListingDF = pandas.read_csv(imagesListingFile, header=0)  # First line of data is taken as the column headings
+	# DataFrame of all the images
+	allImagesListingDF = pandas.read_csv(imagesListingFile, header=0)  # First line of data is taken as the column headings
 
-	labImagesListingDF = imagesListingDF[imagesListingDF.source == "lab"]  # subset of images that are lab images
-	fieldImagesListingDF = imagesListingDF[imagesListingDF.source == "field"]  # subset of images that are field images
+	labImagesListingDF = allImagesListingDF[allImagesListingDF.source == "lab"]  # subset of images that are lab images
+	fieldImagesListingDF = allImagesListingDF[allImagesListingDF.source == "field"]  # subset of images that are field images
 
-	imagesCount = len(imagesListingDF)
+	imagesCount = len(allImagesListingDF)
 	labImagesCount = len(labImagesListingDF)
 	fieldImagesCount = len(fieldImagesListingDF)
 
@@ -66,7 +68,32 @@ def main():
 	# string1 = labImagesListingDF[1:2].get('source')
 	#print(labImagesListingDF[1:3].values)
 
-	for imageNum in range(1, 2):
+
+
+	"""2. Image Preprocessing and Obtaining Features"""
+
+	# The DataFrame of the images we are going to be using
+	imagesListingDF = labImagesListingDF # Using the lab images
+
+	"""
+		The Features being used are:
+			Hu's 7 invariant moments
+			Haralick's 14 Texture Descriptors
+	"""
+	features =  [
+					"Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7", "TD1", "TD2", "TD3", "TD4", "TD5", "TD6", "TD7",
+					"TD8", "TD9", "TD10", "TD11", "TD12", "TD13", "TD14"
+				]
+
+	"""
+		featureMatrixDF is a list of the feature vectors for all the images as a DataFrame structure
+		Each row number corresponds to the row number in the imagesListingDF that is being used, i.e. row i in
+		featureMatrixDF is the feature vector of the image at row i in imagesListingDF 
+
+	"""
+	featureMatrixDF = pandas.DataFrame(columns=features)
+
+	for imageNum in range(0, 2):
 		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
 
@@ -85,7 +112,10 @@ def main():
 		imageSource = getPropertyValue(imagesListingDF, imageNum, SOURCE)
 
 		if imageSource == "lab":
-			# Crop image to size and colour patch rulers on the right and bottom
+			"""
+				Crop image to size and colour patch rulers on the right and bottom
+				Since x-axis increases downwards and y-axis increases rightwards, we start from 0 on both coordinates and crop at the end
+			"""
 			image = image[0:imageHeight-120, 0: imageWidth-190]
 
 		ImageProcessing.displayImage(imageFullPath, image)
@@ -111,46 +141,53 @@ def main():
 		image = ImageProcessing.morphImage(image)
 		ImageProcessing.displayImage(imageFullPath, image)
 
-		#image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-		#imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)
+		featureMatrix = ImageProcessing.getImageFeatures(image)
 
+		featureMatrixDF.loc[imageNum] = featureMatrix
 
+		# image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
+		# imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)
 
-		#print(len(image))
-		#print(len(image[0]))
-		#print(len(image[0][0]))
-		#ImageProcessing.displayImage(imageFullPath, image)
-
-
-
-	"""2. Image Preprocessing"""
-
-
-	"""3. Obtain Features"""
-
-	"""
-		The Features being used are:
-			Hu's 7 invariant moments
-			Haralick's 14 Texture Descriptors
-	"""
-	features =  [
-					"Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7", "TD1", "TD2", "TD3", "TD4", "TD5", "TD6", "TD7",
-					"TD8", "TD9", "TD10", "TD11", "TD12", "TD13", "TD14"
-				]
-
-	"""
-		featureMatrixDF is a list of the feature vectors for all the images as a DataFrame structure
-		Each row number corresponds to the row number in the imagesListingDF that is being used, i.e. row i in
-		featureMatrixDF is the feature vector of the image at row i in imagesListingDF 
-		
-	"""
-	featureMatrixDF = pandas.DataFrame(columns=features)
-
-	ImageProcessing.getImageFeatures(image)
-
+		# print(len(image))
+		# print(len(image[0]))
+		# print(len(image[0][0]))
+		# ImageProcessing.displayImage(imageFullPath, image)
 
 
 	"""4. Training"""
+
+	# The label (Classification) of an image (being represented by its feature vector) is the species of that image
+	labelsDF = imagesListingDF["species"]
+
+	"""
+		Splitting the labelled dataset into a Training Set (67%) and a Test Set (33%) and doing the training and testing
+		Setting train_size to 0.67 and test_size will be automatically set to 0.33 (1.0-0.67)
+		
+		The data is shuffled before splitting (by default)
+
+		featuresTest is what we are going to use to predict the species to test our model
+		labelsTest matrix is the 'ground truth' labels (i.e. correct species)
+		
+		Since there are many different species, it would be preferable to maintain the splitting within each species
+		as well, i.e. the images for each species are split such that 67% contributes towards the Training Set and 33%
+		contributes towards the Testing Set. If the splitting is only done across the entire dataset then we will end 
+		up with a scenario where many or all images of a species are selected for the Training Set and none (or very) 
+		litte are selected for the Testing Set, and vice versa, which would reduce the accuracy of the model.
+		I.e. We want to ensure that relative class frequencies is approximately preserved in each train and test fold
+
+		Since we are not specifying a random_state value, the train and test datasets will be shuffled differently on every run
+			If an integer value is specified, a same/similar shuffle will be done each time resulting in the same train and test datasets
+	"""
+
+	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(featureMatrixDF, labelsDF, train_size=0.67, stratify=labelsDF)
+
+
+
+
+
+
+
+
 
 
 
