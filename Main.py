@@ -89,18 +89,22 @@ def main():
 	"""
 	featureMatrixDF = pandas.DataFrame(columns=ImageProcessing.FEATURES)
 
-	#for imageNum in range(len(imagesListingDF)):
-	for imageNum in range(0, 2):
+	for imageNum in range(len(imagesListingDF)):
+	#for imageNum in range(0, 2):
 		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
 
-		#image = ImageProcessing.openImage(imageFullPath)
+		print(imageNum, end=":\t")
+
+		image = ImageProcessing.openImage(imageFullPath)
+
+		#Testing different images
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
-		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-07-4.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-07-4.jpg")
 
-		print(image)
+		#print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
 
 
@@ -116,32 +120,38 @@ def main():
 			"""
 			image = image[0:imageHeight-120, 0: imageWidth-190]
 
-		ImageProcessing.displayImage(imageFullPath, image)
+		#ImageProcessing.displayImage(imageFullPath, image)
 
 		enhancedImage = ImageProcessing.enhanceImage(image)
 
-		ImageProcessing.displayImage(imageFullPath, enhancedImage)
-
-		imageHistogram = cv2.calcHist(enhancedImage, [0], None, [256], [0, 256])
-
-		pyplot.plot(imageHistogram, color='g')
-		pyplot.xlim([0, 256])
-		pyplot.show()
+		#ImageProcessing.displayImage(imageFullPath, enhancedImage)
 
 
-		thresholdValue, segmentedImage = ImageProcessing.segmentImage(enhancedImage)
+		#imageHistogram = cv2.calcHist(enhancedImage, [0], None, [256], [0, 256])
 
-		print("Thresholded Image:")
-		print(segmentedImage)
-		ImageProcessing.displayImage(imageFullPath, segmentedImage)
+		#pyplot.plot(imageHistogram, color='g')
+		#pyplot.xlim([0, 256])
+		#pyplot.show()
+
+
+		enhancedImage2 = ImageProcessing.gammaTransformImage(enhancedImage)
+
+		#ImageProcessing.displayImage(imageFullPath, enhancedImage2)
+
+
+		thresholdValue, segmentedImage = ImageProcessing.segmentImage(enhancedImage2)
+
+		#print("Thresholded Image:")
+		#print(segmentedImage)
+		#ImageProcessing.displayImage(imageFullPath, segmentedImage)
 
 		morphedImage = ImageProcessing.morphImage(segmentedImage)
-		ImageProcessing.displayImage(imageFullPath, morphedImage)
+		#ImageProcessing.displayImage(imageFullPath, morphedImage)
 
 		# Our greyscale image is the enhancedImage and our binary thresholded image is the morphedImage
-		featureMatrix = ImageProcessing.getImageFeatures(enhancedImage, morphedImage)
+		featureVector = ImageProcessing.getImageFeatures(enhancedImage, morphedImage)
 
-		featureMatrixDF.loc[imageNum] = featureMatrix
+		featureMatrixDF.loc[imageNum] = featureVector
 
 		# image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
 		# imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)

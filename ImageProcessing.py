@@ -1,6 +1,7 @@
 import cv2
 import numpy
 import math
+import mahotas
 
 #CONSTANTS
 MEDIAN = 0
@@ -8,12 +9,14 @@ GAUSSIAN = 1
 
 """
 	The Features being used are:
+		Area, Perimeter of Segmented image
+		Mean Intensity of Grayscale Image 
 		Hu's 7 invariant moments
-		Haralick's 14 Texture Descriptors
+		The following of Haralick's 14 Texture Descriptors/Features: Energy, Contrast, Correlation, Homogeneity, Entropy
 """
 FEATURES = [
-			"Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7", "TD1", "TD2", "TD3", "TD4", "TD5", "TD6", "TD7",
-			"TD8", "TD9", "TD10", "TD11", "TD12", "TD13", "TD14"
+			"Area", "Perimeter", "Mean Intensity", "Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7",
+			"Energy", "Contrast", "Correlation", "Homogeneity", "Entropy"
 			]
 
 
@@ -88,9 +91,6 @@ def enhanceImage(image, filterMethod=GAUSSIAN):
 	#image = cv2.equalizeHist(image)
 
 
-	# Gamma Transformation
-	image = numpy.array(image ** 0.5, dtype='uint8')
-
 	#Doing Smoothing
 
 	if filterMethod == MEDIAN:
@@ -102,6 +102,18 @@ def enhanceImage(image, filterMethod=GAUSSIAN):
 
 	return enhancedImage
 
+
+def gammaTransformImage(image):
+	"""
+		Apply Gamma Transformation to the image
+		:param image:
+		:return:
+	"""
+
+	# Gamma Transformation
+	gtImage = numpy.array(image ** 0.5, dtype='uint8')
+
+	return gtImage
 
 
 
@@ -135,7 +147,7 @@ def segmentImage(image):
 		T = -1 # since adaptative thresholding was used, there's no single threshold value
 
 
-	print("Threshold value: ", T)
+	#print("Threshold value: ", T)
 
 	return T, segmentedImage
 
@@ -164,12 +176,48 @@ def getEdges(image):
 
 def getImageFeatures(grayscaleImage, binaryImage):
 	"""
+		The Features being used are:
+			Area, Perimeter of Segmented image
+			Mean Intensity of Grayscale Image
+			Hu's 7 invariant moments
+			The following of Haralick's 14 Texture Descriptors/Features: Energy, Contrast, Correlation, Homogeneity, Entropy
 
 		:param grayscaleImage: the image (as a 2D array of grey-level intensities)
 		:param binaryImage: the image after thresholding was done
 		:return: The feature vector (as a list) of this image
 	"""
+
 	featureVector = []
+
+	"""
+			Since a pixel is a 1x1 square block, the area of a leaf is the number of pixels (white pixels due to segmentation) 
+			that make up the leaf in the image
+		"""
+	area = numpy.sum(binaryImage == 255)
+	featureVector.append(area)
+
+	"""
+		Perimeter
+
+		- Get contours of image
+
+		cv2.RETR_TREE - retrieves all of the contours and reconstructs a full hierarchy of nested contours.
+		cv2.RETR_EXTERNAL - retrieves only the extreme outer contours
+			-> Doing this method since we are categorising leaves by their shape and there are no
+				holes in the leaves
+			-> Thus since we're only retrieving the extreme outer contour, there is only one element in contours
+
+		The boundary is not straight lines (as is the case with a square or rectange) so we're storing
+		all points of the contour -> cv2.CHAIN_APPROX_NONE
+	"""
+	contours, hierarchy = cv2.findContours(binaryImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
+
+	perimeter = cv2.arcLength(contours[0], True)
+	featureVector.append(round(perimeter, 4))
+
+	meanIntensity = cv2.mean(grayscaleImage)
+	featureVector.append(round(meanIntensity[0], 4)) # Since image is grayscale, the mean value is the first channel
+
 
 	moments = cv2.moments(grayscaleImage, binaryImage=False)
 	huMoments = cv2.HuMoments(moments) # Get the 7 Hu Invariant moments as a list
@@ -194,23 +242,34 @@ def getImageFeatures(grayscaleImage, binaryImage):
 
 
 	for m in huMoments:
-		featureVector.append(m)
+		featureVector.append(round(m, 4))
 
 
 	"""
-		Since a pixel is a 1x1 square block, the area of a leaf is the number of pixels (white pixels due to segmentation) 
-		that make up the leaf in the image
+		Haralick's Textural Features
+		
+		Energy/Uniformity (Angular Second Moment) is Feature Number 1 (index = 0)
+		Contrast is Feature Number 2 (index = 1)
+		Correlation is Feature Number 3 (index = 2)
+		Homogeneity (Inverse Difference Moment) is Feature Number 5 (index = 4)
+		Entropy is Feature Number 9 (index = 8)
+		
+		distance default is 1
+		We are taking the average/mean of each feature in all four angle directions (0, 45, 90, 135 degrees) - This 
+		results in rotational invariance
+		
+		
 	"""
-	area = numpy.sum(binaryImage==255)
-	featureVector.append(area)
+	haralickTFeatures = mahotas.features.haralick(grayscaleImage, return_mean=True)
+	featureVector.append(round(haralickTFeatures[0], 4))  # Energy
+	featureVector.append(round(haralickTFeatures[1], 4))  # Contrast
+	featureVector.append(round(haralickTFeatures[2], 4))  # Correlation
+	featureVector.append(round(haralickTFeatures[4], 4))  # Homogeneity
+	featureVector.append(round(haralickTFeatures[8], 4))  # Entropy
 
-	# Perimeter
-	
+	#print(featureVector)
 
-	meanIntensity = cv2.mean(grayscaleImage)
-
-
-	print(featureVector)
+	return featureVector
 
 """==============================================================================================================="""
 #Write image to file
