@@ -212,7 +212,11 @@ def getImageFeatures(grayscaleImage, binaryImage):
 	"""
 	contours, hierarchy = cv2.findContours(binaryImage, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_NONE)
 
-	perimeter = cv2.arcLength(contours[0], True)
+	if len(contours) > 0:
+		perimeter = cv2.arcLength(contours[0], True)
+	else:
+		perimeter = 0
+
 	featureVector.append(round(perimeter, 4))
 
 	meanIntensity = cv2.mean(grayscaleImage)

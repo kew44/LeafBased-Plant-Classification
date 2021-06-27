@@ -77,8 +77,8 @@ def main():
 	"""2. Image Preprocessing and Obtaining Features"""
 
 	# The DataFrame of the images we are going to be using
-	imagesListingDF = labImagesListingDF # Using the lab images
-
+	#imagesListingDF = labImagesListingDF # Using the lab images
+	imagesListingDF = labImagesListingDF[0:2000]
 
 
 	"""
@@ -209,7 +209,7 @@ def main():
 
 	print()
 	# Verify that Stratified splitting was done
-	print("Verifying Stratification: (Compare with above listing)")
+	print("Verifying Stratification: (Compare with above listing - must be equal to 0.8 of corresponding value)")
 	speciesTrainingDict = Counter(labelsTrain)
 	speciesList = []
 
@@ -228,13 +228,13 @@ def main():
 	mlpClassifier = MLPClassifier(random_state=1, max_iter=1000)
 
 	from sklearn.linear_model import LogisticRegression
-	lrClassifier = LogisticRegression(max_iter=1000)
+	lrClassifier = LogisticRegression(random_state=1, max_iter=1000000)
 
 	from sklearn.svm import SVC
-	svcClassifier = SVC(random_state=1)
+	svcClassifier = SVC(random_state=1, max_iter=100000)
 
 	from sklearn.svm import LinearSVC
-	lsvcClassifier = LinearSVC(random_state=1)
+	lsvcClassifier = LinearSVC(random_state=1, max_iter=100000)
 
 	from sklearn.naive_bayes import GaussianNB
 	gnbClassifier = GaussianNB()
@@ -257,6 +257,7 @@ def main():
 		labelPredictions = classifier.predict(featuresTest)
 
 		print("Classifier:", classifier.__class__.__name__)
+		print("------------------------------------------\n")
 
 		"""
 			normalize = True -> returns fraction (in decimal) of correctly classified samples (best performance = 1)
@@ -286,10 +287,10 @@ def main():
 		print("Hamming Loss: ", round(hammingLoss, 3))
 
 		print()
-		print("Confusion Matrix: ", metrics.confusion_matrix(labelsTest, labelPredictions))
+		#print("Confusion Matrix:\n", metrics.confusion_matrix(labelsTest, labelPredictions))
 		print()
 		print("Classification Report showing the main Classification metrics for each label (species):\n", metrics.classification_report(labelsTest, labelPredictions, target_names=speciesList, zero_division=0))
-		print("-----------------------------------")
+		print("===============================================================================\n\n")
 
 
 
