@@ -96,8 +96,9 @@ def main():
 
 		#image = ImageProcessing.openImage(imageFullPath)
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1.jpg")
-		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
+		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-07-4.jpg")
 
 		print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
@@ -190,6 +191,13 @@ def main():
 
 	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(featureMatrixDF, labelsDF, train_size=0.67, stratify=labelsDF, random_state=1)
 
+	print("Splitting sizes:")
+	print("\tfeaturesTrain:\t", featuresTrain.shape)
+	print("\tfeaturesTest:\t", featuresTest.shape)
+	print("\tlabelsTrain:\t", labelsTrain.shape)
+	print("\tlabelsTest:\t", labelsTest.shape)
+
+	print()
 	# Verify that Stratified splitting was done
 	print("Verifying Stratification: (Compare with above listing)")
 	speciesTrainingDict = Counter(labelsTrain)
@@ -213,24 +221,28 @@ def main():
 	lrClassifier = LogisticRegression(max_iter=1000)
 
 	from sklearn.svm import SVC
-	svcClassifier = SVC()
+	svcClassifier = SVC(random_state=1)
 
 	from sklearn.svm import LinearSVC
-	lsvcClassifier = LinearSVC()
+	lsvcClassifier = LinearSVC(random_state=1)
 
-	from sklearn.naive_bayes import MultinomialNB
-	mnbClassifier = MultinomialNB()
+	from sklearn.naive_bayes import GaussianNB
+	gnbClassifier = GaussianNB()
 
 	from sklearn.linear_model import Perceptron
-	pClassifer = Perceptron()
+	pClassifer = Perceptron(random_state=1)
 
 	from sklearn.linear_model import PassiveAggressiveClassifier
-	paClassifer = PassiveAggressiveClassifier()
+	paClassifer = PassiveAggressiveClassifier(random_state=1)
 
-	rfClassifier = RandomForestClassifier()
+	from sklearn.neighbors import KNeighborsClassifier
+	knClassifier = KNeighborsClassifier() # Default: k=5, distance used is Euclidean Distance, weights = uniform (all points in neighbourhood weighted equally)
+
+	from sklearn.ensemble import RandomForestClassifier
+	rfClassifier = RandomForestClassifier(random_state=1)
 
 
-	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, mnbClassifier, pClassifer, paClassifer]:
+	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier, rfClassifier]:
 		classifier.fit(featuresTrain, labelsTrain)
 		labelPredictions = classifier.predict(featuresTest)
 

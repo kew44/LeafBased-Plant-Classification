@@ -115,13 +115,23 @@ def segmentImage(image):
 
 	thresholdValue = 128 # Set threshold value, being the middle greyscale intensity level
 	maxIntensity = 255
-	T, segmentedImage = cv2.threshold(image, thresholdValue, maxIntensity, cv2.THRESH_BINARY + cv2.THRESH_OTSU) # Global thresholding
+
+	"""
+		Since thresholding results in a binary image of black and white pixels with the black pixels being represented
+		by a 0 value and the white pixels being represented by a 1 value and Image Moments look at pixel intensity of 
+		the image, we want the foreground (Region of Interest) to be represented by white pixels and the background 
+		to be represented by black pixels. Since for our dataset, the foreground (the leaves) is darker than the background
+		in the images, we want to do Binary Thresholding but inversing the intensities (if pixelIntensity <= Threshold then 
+		assign value 1, else assign value 0)
+		[Note: The threshold() function assigns 255 instead of 2. So intensity values are either 0 or 255]
+	"""
+	T, segmentedImage = cv2.threshold(image, thresholdValue, maxIntensity, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU) # Global thresholding
 
 	#if Otsu's method didn't work properly (too many black pixels) then use adaptative thresholding
-	countBlackPixels = numpy.sum(segmentedImage==0)
+	countWhitePixels = numpy.sum(segmentedImage==maxIntensity)
 
-	if countBlackPixels > (image.shape[0]*image.shape[1] / 3):
-		segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY, 5, 2) # block size of 5
+	if countWhitePixels > (image.shape[0]*image.shape[1] / 3):
+		segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV , 5, 2) # block size of 5
 		T = -1 # since adaptative thresholding was used, there's no single threshold value
 
 
@@ -187,9 +197,15 @@ def getImageFeatures(grayscaleImage, binaryImage):
 		featureVector.append(m)
 
 
-	# The area of a leaf is the number of pixels (black pixels due to segmentation) that make up the leaf in the image
+	"""
+		Since a pixel is a 1x1 square block, the area of a leaf is the number of pixels (white pixels due to segmentation) 
+		that make up the leaf in the image
+	"""
 	area = numpy.sum(binaryImage==255)
 	featureVector.append(area)
+
+	# Perimeter
+	
 
 	meanIntensity = cv2.mean(grayscaleImage)
 
