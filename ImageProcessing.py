@@ -1,10 +1,20 @@
 import cv2
 import numpy
-
+import math
 
 #CONSTANTS
 MEDIAN = 0
 GAUSSIAN = 1
+
+"""
+	The Features being used are:
+		Hu's 7 invariant moments
+		Haralick's 14 Texture Descriptors
+"""
+FEATURES = [
+			"Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7", "TD1", "TD2", "TD3", "TD4", "TD5", "TD6", "TD7",
+			"TD8", "TD9", "TD10", "TD11", "TD12", "TD13", "TD14"
+			]
 
 
 def openImage(imageName):
@@ -74,6 +84,13 @@ def displayImage(imageName, image):
 
 def enhanceImage(image, filterMethod=GAUSSIAN):
 
+	# [Deprecated] Do Histogram Equalisation
+	#image = cv2.equalizeHist(image)
+
+
+	# Gamma Transformation
+	image = numpy.array(image ** 0.5, dtype='uint8')
+
 	#Doing Smoothing
 
 	if filterMethod == MEDIAN:
@@ -87,19 +104,20 @@ def enhanceImage(image, filterMethod=GAUSSIAN):
 
 
 
+
 def segmentImage(image):
 	"""
 
 		:param image: A grayscale image
-		:return:
+		:return: thresholding image (black pixels indicate the image [leaf])
 	"""
 	# Do Thresholding
 
-	thresholdValue = 128
+	thresholdValue = 128 # Set threshold value, being the middle greyscale intensity level
 	maxIntensity = 255
 	T, segmentedImage = cv2.threshold(image, thresholdValue, maxIntensity, cv2.THRESH_BINARY + cv2.THRESH_OTSU) # Global thresholding
 
-	#if Otsu's method didn't work properly (too many black pixels) then use the set threshold value
+	#if Otsu's method didn't work properly (too many black pixels) then use adaptative thresholding
 	countBlackPixels = numpy.sum(segmentedImage==0)
 
 	if countBlackPixels > (image.shape[0]*image.shape[1] / 3):
@@ -125,16 +143,58 @@ def morphImage(image):
 	return morphedImage
 
 
-def getImageFeatures(image):
+def getEdges(image):
 	"""
 
-		:param image: the image (as a 2D array of grey-level intensities)
+		:param image: An 8-bit grayscale image
+		:return:
+	"""
+	edges = cv2.Canny(image, 0 , 255)
+
+
+def getImageFeatures(grayscaleImage, binaryImage):
+	"""
+
+		:param grayscaleImage: the image (as a 2D array of grey-level intensities)
+		:param binaryImage: the image after thresholding was done
 		:return: The feature vector (as a list) of this image
 	"""
-	moments = cv2.moments(image, binaryImage=False)
-	huMoments = cv2.HuMoments(moments) # Get the 7 Hu Invariant moments as a list
-	print(huMoments)
+	featureVector = []
 
+	moments = cv2.moments(grayscaleImage, binaryImage=False)
+	huMoments = cv2.HuMoments(moments) # Get the 7 Hu Invariant moments as a list
+
+	"""
+		Since each Hu Moment in huMoments is a list itself (of a single value),
+		flatten the huMoments list to make the list a 1D list (the Hu Moments are now values of this list) 
+	"""
+	huMoments = huMoments.flatten()
+
+	# Apply log transform to Hu Moments to make them of a comparable scale
+
+	for i in range(len(huMoments)):
+		"""
+			Since the absolute values of the Hu Moments are small floating point values less than 1,
+			the log will return a negative value and multiplied by -1 will return a positive value.
+			However if the initial value of the Hu Moment was negative, we want the transformed value
+			to also be negative. Thus we multiply by either 1 or -1 (depending on the initial sign of the 
+			Hu Moment) to ensure that the sign remains the same
+		"""
+		huMoments[i] = -1 * math.copysign(1, huMoments[i]) * math.log10(abs(huMoments[i]))
+
+
+	for m in huMoments:
+		featureVector.append(m)
+
+
+	# The area of a leaf is the number of pixels (black pixels due to segmentation) that make up the leaf in the image
+	area = numpy.sum(binaryImage==255)
+	featureVector.append(area)
+
+	meanIntensity = cv2.mean(grayscaleImage)
+
+
+	print(featureVector)
 
 """==============================================================================================================="""
 #Write image to file

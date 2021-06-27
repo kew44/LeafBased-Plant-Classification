@@ -79,15 +79,7 @@ def main():
 	# The DataFrame of the images we are going to be using
 	imagesListingDF = labImagesListingDF # Using the lab images
 
-	"""
-		The Features being used are:
-			Hu's 7 invariant moments
-			Haralick's 14 Texture Descriptors
-	"""
-	features =  [
-					"Hu1", "Hu2", "Hu3", "Hu4", "Hu5", "Hu6", "Hu7", "TD1", "TD2", "TD3", "TD4", "TD5", "TD6", "TD7",
-					"TD8", "TD9", "TD10", "TD11", "TD12", "TD13", "TD14"
-				]
+
 
 	"""
 		featureMatrixDF is a list of the feature vectors for all the images as a DataFrame structure
@@ -95,16 +87,17 @@ def main():
 		featureMatrixDF is the feature vector of the image at row i in imagesListingDF 
 
 	"""
-	featureMatrixDF = pandas.DataFrame(columns=features)
+	featureMatrixDF = pandas.DataFrame(columns=ImageProcessing.FEATURES)
 
+	#for imageNum in range(len(imagesListingDF)):
 	for imageNum in range(0, 2):
 		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
 		imageFullPath = leafsnapDirectory + imagePath
 
 		#image = ImageProcessing.openImage(imageFullPath)
-		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1-828.jpg")
-		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
-		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1.jpg")
+		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
 
 		print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
@@ -124,28 +117,28 @@ def main():
 
 		ImageProcessing.displayImage(imageFullPath, image)
 
-		image = ImageProcessing.enhanceImage(image)
+		enhancedImage = ImageProcessing.enhanceImage(image)
 
-		ImageProcessing.displayImage(imageFullPath, image)
+		ImageProcessing.displayImage(imageFullPath, enhancedImage)
 
-		imageHistogram = cv2.calcHist(image, [0], None, [256], [0,256])
-
+		imageHistogram = cv2.calcHist(enhancedImage, [0], None, [256], [0, 256])
 
 		pyplot.plot(imageHistogram, color='g')
 		pyplot.xlim([0, 256])
 		pyplot.show()
 
 
-		thresholdValue, image = ImageProcessing.segmentImage(image)
+		thresholdValue, segmentedImage = ImageProcessing.segmentImage(enhancedImage)
 
 		print("Thresholded Image:")
-		print(image)
-		ImageProcessing.displayImage(imageFullPath, image)
+		print(segmentedImage)
+		ImageProcessing.displayImage(imageFullPath, segmentedImage)
 
-		image = ImageProcessing.morphImage(image)
-		ImageProcessing.displayImage(imageFullPath, image)
+		morphedImage = ImageProcessing.morphImage(segmentedImage)
+		ImageProcessing.displayImage(imageFullPath, morphedImage)
 
-		featureMatrix = ImageProcessing.getImageFeatures(image)
+		# Our greyscale image is the enhancedImage and our binary thresholded image is the morphedImage
+		featureMatrix = ImageProcessing.getImageFeatures(enhancedImage, morphedImage)
 
 		featureMatrixDF.loc[imageNum] = featureMatrix
 
@@ -234,6 +227,8 @@ def main():
 	from sklearn.linear_model import PassiveAggressiveClassifier
 	paClassifer = PassiveAggressiveClassifier()
 
+	rfClassifier = RandomForestClassifier()
+
 
 	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, mnbClassifier, pClassifer, paClassifer]:
 		classifier.fit(featuresTrain, labelsTrain)
@@ -246,17 +241,28 @@ def main():
 			normalise = False -> returns count  of correctly classified samples
 			default is  normalise = True
 		"""
-		print("Accuracy: ", metrics.accuracy_score(labelsTest, labelPredictions))
+		accuracy = metrics.accuracy_score(labelsTest, labelPredictions)
+		print("Accuracy: ", round(accuracy, 3)) # Round to 3 decimal places when displaying
 
 		# 'labels parameter by default uses the labels passed in by the ground truth (labelsTest)'
 		# average='micro' since we are doing Single-Label Classification - the other options macro/weighted/samples are for Multi-Label Classification
 		# Return 0 if there is any division by 0 about to take place
 
-		print("Precision: ", metrics.precision_score(labelsTest, labelPredictions, average='micro', zero_division=0))
-		print("Recall: ", metrics.recall_score(labelsTest, labelPredictions, average='micro', zero_division=0))
-		print("F1 Score: ", metrics.f1_score(labelsTest, labelPredictions, average='micro', zero_division=0))
-		print("Jaccard Score: ", metrics.jaccard_score(labelsTest, labelPredictions, average='micro'))
-		print("Hamming Loss: ", metrics.hamming_loss(labelsTest, labelPredictions))
+		precision = metrics.precision_score(labelsTest, labelPredictions, average='micro', zero_division=0)
+		print("Precision: ", round(precision, 3))
+
+		recall = metrics.recall_score(labelsTest, labelPredictions, average='micro', zero_division=0)
+		print("Recall: ", round(recall, 3))
+
+		f1 = metrics.f1_score(labelsTest, labelPredictions, average='micro', zero_division=0)
+		print("F1 Score: ", round(f1, 3))
+
+		jaccard = metrics.jaccard_score(labelsTest, labelPredictions, average='micro')
+		print("Jaccard Score: ", round(jaccard, 3))
+
+		hammingLoss = metrics.hamming_loss(labelsTest, labelPredictions)
+		print("Hamming Loss: ", round(hammingLoss, 3))
+
 		print()
 		print("Confusion Matrix: ", metrics.confusion_matrix(labelsTest, labelPredictions))
 		print()
