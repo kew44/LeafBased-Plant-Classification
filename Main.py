@@ -21,7 +21,8 @@ from matplotlib import pyplot
 from sklearn.model_selection import train_test_split
 from collections import Counter
 from sklearn.neural_network import MLPClassifier
-from sklearn import metrics
+from sklearn import metrics, preprocessing
+
 
 import ImageProcessing # My file
 
@@ -38,6 +39,14 @@ SOURCE = 4
 # The column names in a array
 COLUMNS = ["file_id", "image_path", "segmented_path", "species", "source"]
 
+
+# FOR the 2 below, Ive done all the A's so far
+
+# species whose images are large thus we limiting the amount to be cropped
+LARGE_SPECIES = ["Aesculus pavi", "Aesculus hippocastamon", "Albizia julibrissin"]
+
+# species whose images where the rulers take up more space than normal thus we want to crop more
+BIG_RULER_SPECIES = ["Acer saccharinum", "Acer saccharum", "Ailanthus altissima"]
 
 def main():
 	"""1. Obtain Dataset"""
@@ -77,8 +86,7 @@ def main():
 	"""2. Image Preprocessing and Obtaining Features"""
 
 	# The DataFrame of the images we are going to be using
-	#imagesListingDF = labImagesListingDF # Using the lab images
-	imagesListingDF = labImagesListingDF[0:2000]
+	imagesListingDF = labImagesListingDF # Using the lab images
 
 
 	"""
@@ -89,20 +97,27 @@ def main():
 	"""
 	featureMatrixDF = pandas.DataFrame(columns=ImageProcessing.FEATURES)
 
-	for imageNum in range(len(imagesListingDF)):
-	#for imageNum in range(0, 2):
+	#for imageNum in range(len(imagesListingDF)):
+	for imageNum in range(1943, 1944):
 		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
+		imageSpecies = getPropertyValue(imagesListingDF, imageNum, SPECIES)
 		imageFullPath = leafsnapDirectory + imagePath
 
 		print(imageNum, end=":\t")
 
-		image = ImageProcessing.openImage(imageFullPath)
+		#image = ImageProcessing.openImage(imageFullPath)
 
 		#Testing different images
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-07-4.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_pavi/ny1019-10-1.jpg")
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/acer_pseudoplatanus/wb1559-08-2.jpg")
+		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/albizia_julibrissin/wb1580-01-1.jpg")
+
+		imageSpecies = "Albizia julibrissin"
+
 
 		#print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
@@ -111,6 +126,12 @@ def main():
 		imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
 		imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
 
+		print("\tDimensions: ", imageWidth, "x", imageHeight, sep="")
+
+
+		ImageProcessing.displayImage(imageFullPath, image)
+
+
 		imageSource = getPropertyValue(imagesListingDF, imageNum, SOURCE)
 
 		if imageSource == "lab":
@@ -118,9 +139,28 @@ def main():
 				Crop image to size and colour patch rulers on the right and bottom
 				Since x-axis increases downwards and y-axis increases rightwards, we start from 0 on both coordinates and crop at the end
 			"""
-			image = image[0:imageHeight-120, 0: imageWidth-190]
 
-		#ImageProcessing.displayImage(imageFullPath, image)
+			if imageSpecies not in LARGE_SPECIES:
+				image = image[0:int(0.85*imageHeight), 0: int(0.76*imageWidth)]
+
+			else:
+				image = image[0: imageHeight - 25, 0: imageWidth - 50]
+
+			if imageSpecies in BIG_RULER_SPECIES: # Crop more
+				image = image[0:int(0.85*imageHeight), 0: int(0.70*imageWidth)]
+
+			imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
+			imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
+			print("\tCropped Dimensions: ", imageWidth, "x", imageHeight, sep="")
+			ImageProcessing.displayImage(imageFullPath, image)
+
+			# Rescale the image for consistency
+			image = cv2.resize(image, (500, 500), interpolation=cv2.INTER_AREA)
+			imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
+			imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
+			print("\tResized Dimensions: ", imageWidth, "x", imageHeight, sep="")
+
+		ImageProcessing.displayImage(imageFullPath, image)
 
 		enhancedImage = ImageProcessing.enhanceImage(image)
 
@@ -143,7 +183,7 @@ def main():
 
 		#print("Thresholded Image:")
 		#print(segmentedImage)
-		#ImageProcessing.displayImage(imageFullPath, segmentedImage)
+		ImageProcessing.displayImage(imageFullPath, segmentedImage)
 
 		morphedImage = ImageProcessing.morphImage(segmentedImage)
 		#ImageProcessing.displayImage(imageFullPath, morphedImage)
@@ -167,6 +207,14 @@ def main():
 	# The label (Classification) of an image (being represented by its feature vector) is the species of that image
 	labelsDF = imagesListingDF["species"]
 
+
+	"""Scale/Normalise the features"""
+
+	# Using Robust Scaler sicnce data contains outliers
+	scaler = preprocessing.RobustScaler()
+	normalisedFMDF = pandas.DataFrame(scaler.fit_transform(featureMatrixDF), columns=featureMatrixDF.columns) # Normalise feature matrix and convert back to a DataFrame
+	print(normalisedFMDF)
+
 	"""
 		Splitting the labelled dataset into a Training Set (67%) and a Test Set (33%) and doing the training and testing
 		Setting train_size to 0.67 and test_size will be automatically set to 0.33 (1.0-0.67)
@@ -182,7 +230,7 @@ def main():
 		as well, i.e. the images for each species are split such that 67% contributes towards the Training Set and 33%
 		contributes towards the Testing Set. If the splitting is only done across the entire dataset then we will end 
 		up with a scenario where many or all images of a species are selected for the Training Set and none (or very) 
-		litte are selected for the Testing Set, and vice versa, which would reduce the accuracy of the model.
+		little are selected for the Testing Set, and vice versa, which would reduce the accuracy of the model.
 		I.e. We want to ensure that relative class frequencies is approximately preserved in each train and test fold
 
 		Since we are not specifying a random_state value, the train and test datasets will be shuffled differently on every run
@@ -199,7 +247,7 @@ def main():
 
 	print()
 
-	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(featureMatrixDF, labelsDF, train_size=0.67, stratify=labelsDF, random_state=1)
+	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(normalisedFMDF, labelsDF, train_size=0.67, stratify=labelsDF, random_state=1)
 
 	print("Splitting sizes:")
 	print("\tfeaturesTrain:\t", featuresTrain.shape)
@@ -225,7 +273,7 @@ def main():
 	#Multi-Layer Perceptron
 	#‘adam’ refers to a stochastic gradient-based optimizer proposed by Kingma, Diederik, and Jimmy Ba
 	# Our dataset is sufficiently large, so we're sticking with the default 'adam' solver
-	mlpClassifier = MLPClassifier(random_state=1, max_iter=1000)
+	mlpClassifier = MLPClassifier(random_state=1, max_iter=100000)
 
 	from sklearn.linear_model import LogisticRegression
 	lrClassifier = LogisticRegression(random_state=1, max_iter=1000000)

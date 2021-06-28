@@ -106,12 +106,18 @@ def enhanceImage(image, filterMethod=GAUSSIAN):
 def gammaTransformImage(image):
 	"""
 		Apply Gamma Transformation to the image
+		Only do the Gamma Transformation if the leaf is small in size
+
 		:param image:
 		:return:
 	"""
 
-	# Gamma Transformation
+	#if numpy.sum(image > 150) < 5000:
+		# Gamma Transformation
 	gtImage = numpy.array(image ** 0.5, dtype='uint8')
+	#else:
+		#gtImage = image
+
 
 	return gtImage
 
@@ -139,12 +145,13 @@ def segmentImage(image):
 	"""
 	T, segmentedImage = cv2.threshold(image, thresholdValue, maxIntensity, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU) # Global thresholding
 
-	#if Otsu's method didn't work properly (too many black pixels) then use adaptative thresholding
-	countWhitePixels = numpy.sum(segmentedImage==maxIntensity)
+	#[DEPRECATED] Doing Gamma Transform instead (there are some very large leaves that take up most of the segmented image so not doing this adaptative approach anymore)
+	#if Otsu's method didn't work properly (too many white pixels) then use adaptative thresholding
+	#countWhitePixels = numpy.sum(segmentedImage==maxIntensity)
 
-	if countWhitePixels > (image.shape[0]*image.shape[1] / 3):
-		segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV , 5, 2) # block size of 5
-		T = -1 # since adaptative thresholding was used, there's no single threshold value
+	#if countWhitePixels > (image.shape[0]*image.shape[1] / 3):
+	#	segmentedImage = cv2.adaptiveThreshold(image, maxIntensity, cv2.ADAPTIVE_THRESH_GAUSSIAN_C, cv2.THRESH_BINARY_INV , 5, 2) # block size of 5
+	#	T = -1 # since adaptative thresholding was used, there's no single threshold value
 
 
 	#print("Threshold value: ", T)
@@ -271,7 +278,7 @@ def getImageFeatures(grayscaleImage, binaryImage):
 	featureVector.append(round(haralickTFeatures[4], 4))  # Homogeneity
 	featureVector.append(round(haralickTFeatures[8], 4))  # Entropy
 
-	#print(featureVector)
+	print("\tFeature Vector:\t", featureVector, end="\n\n")
 
 	return featureVector
 
