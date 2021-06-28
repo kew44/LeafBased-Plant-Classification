@@ -333,8 +333,8 @@ def main():
 	"""
 	rfClassifier = RandomForestClassifier(random_state=1, max_depth=1000, min_samples_leaf=100000)
 
-	for classifier in [rfClassifier]:
-	#for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier, rfClassifier]:
+	#for classifier in [rfClassifier]:
+	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier, rfClassifier]:
 		classifier.fit(featuresTrain, labelsTrain)
 		labelPredictions = classifier.predict(featuresTest)
 
