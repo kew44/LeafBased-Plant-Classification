@@ -115,5 +115,5 @@ dmypy.json
 
 
 # Ignore data folder
-/data
+/data/leafsnap-dataset
 .idea/workspace.xml
