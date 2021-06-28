@@ -139,7 +139,6 @@ def main():
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/acer_pseudoplatanus/wb1559-08-2.jpg")
 
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/carya_tomentosa/wb1091-01-1.jpg")
-
 		#imageSpecies = "Carya tomentosa"
 
 
@@ -240,7 +239,7 @@ def main():
 	# Using Robust Scaler sicnce data contains outliers
 	scaler = preprocessing.RobustScaler()
 	normalisedFMDF = pandas.DataFrame(scaler.fit_transform(featureMatrixDF), columns=featureMatrixDF.columns) # Normalise feature matrix and convert back to a DataFrame
-	print(normalisedFMDF)
+	print("Normalised Feature Vectors:\n", normalisedFMDF)
 
 	"""
 		Splitting the labelled dataset into a Training Set (67%) and a Test Set (33%) and doing the training and testing
@@ -326,10 +325,16 @@ def main():
 	knClassifier = KNeighborsClassifier() # Default: k=5, distance used is Euclidean Distance, weights = uniform (all points in neighbourhood weighted equally)
 
 	from sklearn.ensemble import RandomForestClassifier
-	rfClassifier = RandomForestClassifier(random_state=1)
+	"""
 
+		Specifying parameters to control the complexity and size of the trees so that we don't end up with all the memory
+		being consumed
+		Not specifying these parameters may lead to fully grown and unpruned trees
+	"""
+	rfClassifier = RandomForestClassifier(random_state=1, max_depth=1000, min_samples_leaf=100000)
 
-	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier, rfClassifier]:
+	for classifier in [rfClassifier]:
+	#for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier, rfClassifier]:
 		classifier.fit(featuresTrain, labelsTrain)
 		labelPredictions = classifier.predict(featuresTest)
 

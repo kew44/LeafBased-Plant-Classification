@@ -278,7 +278,7 @@ def getImageFeatures(grayscaleImage, binaryImage):
 	featureVector.append(round(haralickTFeatures[4], 4))  # Homogeneity
 	featureVector.append(round(haralickTFeatures[8], 4))  # Entropy
 
-	print("\tFeature Vector:\t", featureVector, end="\n\n")
+	print("\t\tFeature Vector:\t", featureVector, end="\n\n")
 
 	return featureVector
 
