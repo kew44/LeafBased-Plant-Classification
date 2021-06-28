@@ -13,7 +13,9 @@
 
 
 	Acknowledgements:
-		1.
+		1. Towards Data Science blog
+		2. Geeks for Geeks tutorials
+		3. Sci-kit learn's online documentation
 """
 import pandas
 import cv2
@@ -23,10 +25,8 @@ from collections import Counter
 from sklearn.neural_network import MLPClassifier
 from sklearn import metrics, preprocessing
 
+import ImageProcessing # My file containing Image Processing functions
 
-import ImageProcessing # My file
-
-from IPython.display import display
 
 
 # The column names of the Images Listing file with their indexes (in the DataFrame) as CONSTANTS
@@ -40,14 +40,11 @@ SOURCE = 4
 COLUMNS = ["file_id", "image_path", "segmented_path", "species", "source"]
 
 
-# FOR the 2 below, Ive done all the A's so far
 
 # species whose images are large thus we limiting the amount to be cropped
 LARGE_SPECIES = ["Aesculus pavi", "Aesculus flava", "Aesculus hippocastamon", "Albizia julibrissin",
                  "Carya ovata", "Carya tomentosa", "Catalpa speciosa","Fraxinus americana", "Fraxinus nigra",
-                 "Magnolia macrophylla",
-                 "Quercus macrocarpa", "Syringa reticulata",
-                 "Catalpa bignonioides", "Juglans cinerea"]
+                 "Magnolia macrophylla", "Quercus macrocarpa", "Syringa reticulata", "Catalpa bignonioides", "Juglans cinerea"]
 
 # species whose images where the rulers take up more space than normal thus we want to crop more
 BIG_RULER_SPECIES = ["Acer rubrum", "Acer saccharinum", "Acer saccharum", "Aesculus glabra", "Ailanthus altissima",
@@ -56,9 +53,9 @@ BIG_RULER_SPECIES = ["Acer rubrum", "Acer saccharinum", "Acer saccharum", "Aescu
                      "Platanus occidentalis", "Ptelea trifoliata", "Amelanchier laevis", "Chionanthus virginicus",
                      "Malus angustifolia", "Ostrya virginiana", "Ulmus rubra"]
 
-VERY_BIG_RULER_SPECIES = [
-							"Ailanthus altissima", "Gleditsia triacanthos", "Juniperus virginiana",
-							"Platanus occidentalis", "Ulmus rubra"]
+VERY_BIG_RULER_SPECIES = ["Ailanthus altissima", "Gleditsia triacanthos", "Juniperus virginiana", "Platanus occidentalis", "Ulmus rubra"]
+
+
 
 def main():
 	"""1. Obtain Dataset"""
@@ -90,15 +87,13 @@ def main():
 	print("\tNumber of lab images:\t", labImagesCount)
 	print("\tNumber of field images:\t", fieldImagesCount)
 
-	# string1 = labImagesListingDF[1:2].get('source')
-	#print(labImagesListingDF[1:3].values)
 
 
 
 	"""2. Image Preprocessing and Obtaining Features"""
 
 	# The DataFrame of the images we are going to be using
-	imagesListingDF = labImagesListingDF # Using the lab images
+	imagesListingDF = labImagesListingDF # Using the lab images as the dataset
 
 
 	"""
@@ -108,17 +103,18 @@ def main():
 
 	"""
 	featureMatrixDF = pandas.DataFrame(columns=ImageProcessing.FEATURES)
+
 	prevImageSpecies = ""
 
 	for imageNum in range(len(imagesListingDF)):
-	#for imageNum in range(1943, 1944):
+
 		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
 		imageSpecies = getPropertyValue(imagesListingDF, imageNum, SPECIES)
 		imageFullPath = leafsnapDirectory + imagePath
 
 		#print(imageSpecies)
 
-		# Code to check an image sample of each leaf
+		# Code to check the first image sample of each leaf
 		"""
 		if imageSpecies == prevImageSpecies:
 			continue
@@ -130,7 +126,7 @@ def main():
 
 		image = ImageProcessing.openImage(imageFullPath)
 
-		#Testing different images
+		#Testing pipeline on different images
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_hippocastamon/ny1016-05-4.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-09-2.jpg")
@@ -141,8 +137,6 @@ def main():
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/carya_tomentosa/wb1091-01-1.jpg")
 		#imageSpecies = "Carya tomentosa"
 
-
-		#print(image)
 		#ImageProcessing.displayImage(imageFullPath, image)
 
 
@@ -150,9 +144,6 @@ def main():
 		imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
 
 		print("\t\tDimensions: ", imageWidth, "x", imageHeight, sep="")
-
-
-		#ImageProcessing.displayImage(imageFullPath, image)
 
 
 		imageSource = getPropertyValue(imagesListingDF, imageNum, SOURCE)
@@ -178,6 +169,7 @@ def main():
 			imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
 			imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
 			print("\t\tCropped Dimensions: ", imageWidth, "x", imageHeight, sep="")
+
 			#ImageProcessing.displayImage(imageFullPath, image)
 
 			# Rescale the image for consistency
@@ -189,26 +181,20 @@ def main():
 		#ImageProcessing.displayImage(imageFullPath, image)
 
 		enhancedImage = ImageProcessing.enhanceImage(image)
-
 		#ImageProcessing.displayImage(imageFullPath, enhancedImage)
 
-
+		# Not doing Histogram Equalisation anymore
 		#imageHistogram = cv2.calcHist(enhancedImage, [0], None, [256], [0, 256])
-
 		#pyplot.plot(imageHistogram, color='g')
 		#pyplot.xlim([0, 256])
 		#pyplot.show()
 
 
 		enhancedImage2 = ImageProcessing.gammaTransformImage(enhancedImage)
-
 		#ImageProcessing.displayImage(imageFullPath, enhancedImage2)
 
 
 		thresholdValue, segmentedImage = ImageProcessing.segmentImage(enhancedImage2)
-
-		#print("Thresholded Image:")
-		#print(segmentedImage)
 		#ImageProcessing.displayImage(imageFullPath, segmentedImage)
 
 		morphedImage = ImageProcessing.morphImage(segmentedImage)
@@ -219,14 +205,6 @@ def main():
 
 		featureMatrixDF.loc[imageNum] = featureVector
 
-		# image = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-		# imageG = cv2.imread("data/leafsnap-dataset/dataset/images/lab/acer_palmatum/wb1129-04-4.jpg", cv2.IMREAD_GRAYSCALE)
-
-		# print(len(image))
-		# print(len(image[0]))
-		# print(len(image[0][0]))
-		# ImageProcessing.displayImage(imageFullPath, image)
-
 
 	"""4. Classification - Training and Testing"""
 
@@ -236,7 +214,7 @@ def main():
 
 	"""Scale/Normalise the features"""
 
-	# Using Robust Scaler sicnce data contains outliers
+	# Using Robust Scaler since data contains outliers
 	scaler = preprocessing.RobustScaler()
 	normalisedFMDF = pandas.DataFrame(scaler.fit_transform(featureMatrixDF), columns=featureMatrixDF.columns) # Normalise feature matrix and convert back to a DataFrame
 	print("Normalised Feature Vectors:\n", normalisedFMDF)
@@ -259,8 +237,8 @@ def main():
 		little are selected for the Testing Set, and vice versa, which would reduce the accuracy of the model.
 		I.e. We want to ensure that relative class frequencies is approximately preserved in each train and test fold
 
-		Since we are not specifying a random_state value, the train and test datasets will be shuffled differently on every run
-			If an integer value is specified, a same/similar shuffle will be done each time resulting in the same train and test datasets
+		Since we are specifying a random_state value, the train and test datasets will be shuffled the same 
+		for every run, resulting in the same train and test datasets
 	"""
 
 	print()
@@ -283,6 +261,7 @@ def main():
 	print("\tlabelsTest:\t", labelsTest.shape)
 
 	print()
+
 	# Verify that Stratified splitting was done
 	print("Verifying Stratification: (Compare with above listing - must be equal to 0.8 of corresponding value)")
 	speciesTrainingDict = Counter(labelsTrain)
@@ -333,8 +312,7 @@ def main():
 	"""
 	rfClassifier = RandomForestClassifier(random_state=1, max_depth=1000, min_samples_leaf=100000)
 
-	#for classifier in [rfClassifier]:
-	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier, rfClassifier]:
+	for classifier in [mlpClassifier, lrClassifier, svcClassifier, lsvcClassifier, gnbClassifier, pClassifer, paClassifer, knClassifier]:
 		classifier.fit(featuresTrain, labelsTrain)
 		labelPredictions = classifier.predict(featuresTest)
 
@@ -377,14 +355,9 @@ def main():
 
 
 
-
-
-
-
-
-
-
-
+"""
+	Helper Functions
+"""
 
 def printImagesListing(imagesListingDF):
 	"""
@@ -434,6 +407,7 @@ def getPropertyValue(imagesListingDF, row: int, property: int):
 		return imagesListingDF.iloc[row, property]
 	else:
 		return imagesListingDF.iloc[row, FILE_ID] # Default to return if invalid property given
+
 
 
 # Run the main method if this python file is being executed/run directly (either from IDE or Command Line)

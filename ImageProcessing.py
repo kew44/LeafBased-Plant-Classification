@@ -145,7 +145,7 @@ def segmentImage(image):
 	"""
 	T, segmentedImage = cv2.threshold(image, thresholdValue, maxIntensity, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU) # Global thresholding
 
-	#[DEPRECATED] Doing Gamma Transform instead (there are some very large leaves that take up most of the segmented image so not doing this adaptative approach anymore)
+	#[DEPRECATED - Doing Gamma Transform instead (there are some very large leaves that take up most of the segmented image so not doing this adaptative approach anymore)]
 	#if Otsu's method didn't work properly (too many white pixels) then use adaptative thresholding
 	#countWhitePixels = numpy.sum(segmentedImage==maxIntensity)
 
@@ -281,67 +281,3 @@ def getImageFeatures(grayscaleImage, binaryImage):
 	print("\t\tFeature Vector:\t", featureVector, end="\n\n")
 
 	return featureVector
-
-"""==============================================================================================================="""
-#Write image to file
-#save the image in PNG format in the working directory
-#cv2.imwrite(filename, image)
-
-
-
-#intensityfile = open("ImageIntensityValues.csv", "w")
-#intensityfile.write(imageIntensityMatrix)
-#intensityfile.close()
-
-
-def saveIntensityMatrix(imageName, image):
-	"""
-	"""
-
-	# I want the name of the file to include the name of the photo
-	# self.imageName contains the relative directory, so we need to remove it
-
-	forwardslashIndex = imageName.rfind('/')  # Find the last occurrence of a forward slash in the image filename
-	filename = "ImageIntensityValues - '" + imageName[forwardslashIndex + 1:] + "'.csv"
-
-
-	# Set delimiter so that each pixel row is on the same line
-	# fmt (format) - setting it to no decimal places (pixel values are integers)
-	# 	- if not specified, values will be saved in scientific format
-	#	- See https://numpy.org/doc/stable/reference/generated/numpy.savetxt.html
-
-	numpy.savetxt(filename, image, delimiter=", ", fmt="%.0d")
-
-	print("Intensity Matrix saved to file: " + filename)
-
-
-def printIntensityMatrix(imageName, image):
-	"""
-		NOTE:
-			The Run console in Pycharm only displays the start and end values of the matrix,
-			the entire matrix is not displayed
-	"""
-
-	print("Image Pixel Intensity Values of image '" + imageName + "': ")
-	print(image)
-
-
-"""==============================================================================================================="""
-class ImageProcessor:
-	"""
-		A class to represent an image and do processing on that image
-
-		All original images in the Leafsnap dataset are jpg images and all segmented images are png images
-		Instance Variables (fields):
-			imageName
-			image		Variable to store the actual image (its intensity matrix)
-	"""
-
-	def __init__(self, imageName):
-		"""
-			Constructor
-
-			:param imageName: The name of the image, include its directory path and file extension
-
-		"""
-		self.imageName = imageName
