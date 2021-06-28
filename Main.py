@@ -43,10 +43,22 @@ COLUMNS = ["file_id", "image_path", "segmented_path", "species", "source"]
 # FOR the 2 below, Ive done all the A's so far
 
 # species whose images are large thus we limiting the amount to be cropped
-LARGE_SPECIES = ["Aesculus pavi", "Aesculus hippocastamon", "Albizia julibrissin"]
+LARGE_SPECIES = ["Aesculus pavi", "Aesculus flava", "Aesculus hippocastamon", "Albizia julibrissin",
+                 "Carya ovata", "Carya tomentosa", "Catalpa speciosa","Fraxinus americana", "Fraxinus nigra",
+                 "Magnolia macrophylla",
+                 "Quercus macrocarpa", "Syringa reticulata",
+                 "Catalpa bignonioides", "Juglans cinerea"]
 
 # species whose images where the rulers take up more space than normal thus we want to crop more
-BIG_RULER_SPECIES = ["Acer saccharinum", "Acer saccharum", "Ailanthus altissima"]
+BIG_RULER_SPECIES = ["Acer rubrum", "Acer saccharinum", "Acer saccharum", "Aesculus glabra", "Ailanthus altissima",
+                     "Cercis canadensis", "Chionanthus virginicus",  "Gleditsia triacanthos",
+                     "Ilex opaca", "Juniperus virginiana", "Ostrya virginiana",
+                     "Platanus occidentalis", "Ptelea trifoliata", "Amelanchier laevis", "Chionanthus virginicus",
+                     "Malus angustifolia", "Ostrya virginiana", "Ulmus rubra"]
+
+VERY_BIG_RULER_SPECIES = [
+							"Ailanthus altissima", "Gleditsia triacanthos", "Juniperus virginiana",
+							"Platanus occidentalis", "Ulmus rubra"]
 
 def main():
 	"""1. Obtain Dataset"""
@@ -96,16 +108,27 @@ def main():
 
 	"""
 	featureMatrixDF = pandas.DataFrame(columns=ImageProcessing.FEATURES)
+	prevImageSpecies = ""
 
-	#for imageNum in range(len(imagesListingDF)):
-	for imageNum in range(1943, 1944):
+	for imageNum in range(len(imagesListingDF)):
+	#for imageNum in range(1943, 1944):
 		imagePath = getPropertyValue(imagesListingDF, imageNum, IMAGE_PATH)
 		imageSpecies = getPropertyValue(imagesListingDF, imageNum, SPECIES)
 		imageFullPath = leafsnapDirectory + imagePath
 
+		#print(imageSpecies)
+
+		# Code to check an image sample of each leaf
+		"""
+		if imageSpecies == prevImageSpecies:
+			continue
+		else:
+			prevImageSpecies = imageSpecies
+		"""
+
 		print(imageNum, end=":\t")
 
-		#image = ImageProcessing.openImage(imageFullPath)
+		image = ImageProcessing.openImage(imageFullPath)
 
 		#Testing different images
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/maclura_pomifera/pi2235-01-1.jpg")
@@ -114,9 +137,10 @@ def main():
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/ulmus_glabra/ny1074-07-4.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/aesculus_pavi/ny1019-10-1.jpg")
 		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/acer_pseudoplatanus/wb1559-08-2.jpg")
-		image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/albizia_julibrissin/wb1580-01-1.jpg")
 
-		imageSpecies = "Albizia julibrissin"
+		#image = ImageProcessing.openImage("data/leafsnap-dataset/dataset/images/lab/carya_tomentosa/wb1091-01-1.jpg")
+
+		#imageSpecies = "Carya tomentosa"
 
 
 		#print(image)
@@ -126,10 +150,10 @@ def main():
 		imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
 		imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
 
-		print("\tDimensions: ", imageWidth, "x", imageHeight, sep="")
+		print("\t\tDimensions: ", imageWidth, "x", imageHeight, sep="")
 
 
-		ImageProcessing.displayImage(imageFullPath, image)
+		#ImageProcessing.displayImage(imageFullPath, image)
 
 
 		imageSource = getPropertyValue(imagesListingDF, imageNum, SOURCE)
@@ -144,23 +168,26 @@ def main():
 				image = image[0:int(0.85*imageHeight), 0: int(0.76*imageWidth)]
 
 			else:
-				image = image[0: imageHeight - 25, 0: imageWidth - 50]
+				image = image[0: imageHeight - 25, 0: imageWidth - 25]
 
 			if imageSpecies in BIG_RULER_SPECIES: # Crop more
-				image = image[0:int(0.85*imageHeight), 0: int(0.70*imageWidth)]
+				image = image[0:int(0.85*imageHeight), 0: int(0.76*imageWidth)]
+
+				if imageSpecies in VERY_BIG_RULER_SPECIES:  # Crop more
+					image = image[0:int(0.85 * imageHeight), 0: int(0.76 * imageWidth)]
 
 			imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
 			imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
-			print("\tCropped Dimensions: ", imageWidth, "x", imageHeight, sep="")
-			ImageProcessing.displayImage(imageFullPath, image)
+			print("\t\tCropped Dimensions: ", imageWidth, "x", imageHeight, sep="")
+			#ImageProcessing.displayImage(imageFullPath, image)
 
 			# Rescale the image for consistency
 			image = cv2.resize(image, (500, 500), interpolation=cv2.INTER_AREA)
 			imageHeight = image.shape[0]  # number of rows in the 2D array that represents the image
 			imageWidth = image.shape[1]  # number of columns in the 2D array that represents the image
-			print("\tResized Dimensions: ", imageWidth, "x", imageHeight, sep="")
+			print("\t\tResized Dimensions: ", imageWidth, "x", imageHeight, sep="")
 
-		ImageProcessing.displayImage(imageFullPath, image)
+		#ImageProcessing.displayImage(imageFullPath, image)
 
 		enhancedImage = ImageProcessing.enhanceImage(image)
 
@@ -183,7 +210,7 @@ def main():
 
 		#print("Thresholded Image:")
 		#print(segmentedImage)
-		ImageProcessing.displayImage(imageFullPath, segmentedImage)
+		#ImageProcessing.displayImage(imageFullPath, segmentedImage)
 
 		morphedImage = ImageProcessing.morphImage(segmentedImage)
 		#ImageProcessing.displayImage(imageFullPath, morphedImage)
@@ -241,13 +268,14 @@ def main():
 	print("The species along with their number of occurrences in the dataset we're using:")
 
 	speciesDict = Counter(labelsDF)
+	speciesDict = dict(sorted(speciesDict.items()))
 	for key in speciesDict:
 		# format the printing so that the numbers are directly beneath each other (species have variable name length)
 		print("\t", '{species: <30}'.format(species=key), speciesDict[key])
 
 	print()
 
-	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(normalisedFMDF, labelsDF, train_size=0.67, stratify=labelsDF, random_state=1)
+	featuresTrain, featuresTest, labelsTrain, labelsTest = train_test_split(normalisedFMDF, labelsDF, train_size=0.80, stratify=labelsDF, random_state=1)
 
 	print("Splitting sizes:")
 	print("\tfeaturesTrain:\t", featuresTrain.shape)
@@ -259,6 +287,7 @@ def main():
 	# Verify that Stratified splitting was done
 	print("Verifying Stratification: (Compare with above listing - must be equal to 0.8 of corresponding value)")
 	speciesTrainingDict = Counter(labelsTrain)
+	speciesTrainingDict = dict(sorted(speciesTrainingDict.items()))
 	speciesList = []
 
 	for key in speciesTrainingDict:
@@ -270,7 +299,7 @@ def main():
 	print()
 
 	"""Classifiers"""
-	#Multi-Layer Perceptron
+	#Multi-Layer Perceptron - Artificial Neural Network algorithm
 	#‘adam’ refers to a stochastic gradient-based optimizer proposed by Kingma, Diederik, and Jimmy Ba
 	# Our dataset is sufficiently large, so we're sticking with the default 'adam' solver
 	mlpClassifier = MLPClassifier(random_state=1, max_iter=100000)
